@@ -108,7 +108,13 @@ status_code:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wwt.trafficjam.plugins.module_utils.trafficjam import trafficjam_base_argspec, make_request, parse_query_return, process_response
+from ansible_collections.wwt.trafficjam.plugins.module_utils.trafficjam import (
+    trafficjam_base_argspec,
+    make_request,
+    parse_query_return,
+    process_response
+)
+
 
 def generate_url(_params):
     # Gather Parameters
@@ -120,53 +126,55 @@ def generate_url(_params):
     _payload = None
 
     # Generate URL for Query Requests
-    # Construct the URL required for the Request if we are querying for all, or a single VRF and then send the request
     if _state == "query" and not _params['vrf_id']:
         _url = f"http://{_host}:{_port}/trafficjam/api/vrfs"
         _http_method = "get"
-        
+
         # Construct a dictionary to return results with
-        _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+        _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
         return _response_dict
 
     elif _state == "query" and _params.get('vrf_id'):
         _url = f"http://{_host}:{_port}/trafficjam/api/vrfs/{_params['vrf_id']}"
         _http_method = "get"
-        
+
         # Construct a dictionary to return results with
-        _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+        _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
         return _response_dict
 
-    # Generate URL for Present Requests.  HTTP Method of POST is used for creating new VRFs.  PUT is used for binding a VRF to an interface.
+    # Generate URL for Present Requests.
+    # HTTP Method of POST is used for creating new VRFs.
+    # PUT is used for binding a VRF to an interface.
     if _state == "present" and _params['vrf_name'] and _params['vrf_table_id']:
         _url = f"http://{_host}:{_port}/trafficjam/api/vrfs"
         _http_method = "post"
-        _payload = { "name": _params['vrf_name'], "table": _params['vrf_table_id'] }
-        
+        _payload = {"name": _params['vrf_name'], "table": _params['vrf_table_id']}
+
         # Construct a dictionary to return results with
-        _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+        _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
         return _response_dict
 
     elif _state == "present" and _params['vrf_id'] and _params['interface_id']:
         _url = f"http://{_host}:{_port}/trafficjam/api/vrfs/{_params['vrf_id']}"
         _http_method = "put"
-        _payload = { "interface_id": _params['interface_id'] }
-        
+        _payload = {"interface_id": _params['interface_id']}
+
         # Construct a dictionary to return results with
-        _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+        _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
         return _response_dict
-    
+
     # Generate URL for Absent Requests
     if _state == "absent" and _params['vrf_id']:
         _url = f"http://{_host}:{_port}/trafficjam/api/vrfs/{_params['vrf_id']}"
         _http_method = "delete"
-        
+
         # Construct a dictionary to return results with
-        _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+        _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
         return _response_dict
-    
+
+
 def run_module():
-    #define available arguments/parameters a user can pass to the module
+    # define available arguments/parameters a user can pass to the module
     module_args = trafficjam_base_argspec()
     module_args.update(
         vrf_name=dict(type='str', required=False),
@@ -197,7 +205,7 @@ def run_module():
         required_by=dict(
             vrf_name=['vrf_table_id'],
             vrf_table_id=['vrf_name']
-        ),        
+        ),
         required_if=[
             ['state', 'present', ['vrf_name', 'vrf_table_id', 'vrf_id', 'vrf_table_id'], True],
             ['state', 'absent', ['vrf_id']]
@@ -207,17 +215,17 @@ def run_module():
     # Collect Module Parameters
     host = module.params['host']
     port = module.params['port']
-   
+
     # Generate the URL, HTTP Method, and Optional Payload based on Module Parameters
     url_response = generate_url(module.params)
-    
+
     url = url_response['url']
     http_method = url_response['http_method']
     payload = url_response['data']
 
     # We need to validate if the VRF exists already before adding it
     if http_method == "post":
-        query_url=f"http://{host}:{port}/trafficjam/api/vrfs"
+        query_url = f"http://{host}:{port}/trafficjam/api/vrfs"
         query_method = "get"
         query_response = make_request(query_method, query_url, payload, module.params['timeout'])
 
@@ -231,7 +239,7 @@ def run_module():
 
     # Exit the module passing results back to Ansible
     succeeded = process_response(response)
-    
+
     # Manage States Returned to Ansible - If Query, Nothing will ever be changed.
     if succeeded and module.params['state'] == "query":
         result['changed'] = False
@@ -244,11 +252,13 @@ def run_module():
         result['failed'] = True
     result['status_code'] = response['status_code']
     result['response'] = response['response']
-    
+
     module.exit_json(**result)
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

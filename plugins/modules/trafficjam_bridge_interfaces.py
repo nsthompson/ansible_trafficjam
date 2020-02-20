@@ -197,11 +197,18 @@ status_code:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wwt.trafficjam.plugins.module_utils.trafficjam import trafficjam_base_argspec, make_request, parse_query_return, process_response
+from ansible_collections.wwt.trafficjam.plugins.module_utils.trafficjam import (
+    trafficjam_base_argspec,
+    make_request,
+    parse_query_return,
+    process_response
+)
+
 
 def scrub_params(_params):
     #
-    # The builtin methods for scrubbing parameters do not handle nested dictionaries, so we have to do it here
+    # The builtin methods for scrubbing parameters do not handle nested dictionaries,
+    # so we have to do it here
     #
 
     # Some parameters are mutually exclusive
@@ -224,7 +231,7 @@ def scrub_params(_params):
     if _params['config'] is not None and _params['config']['vlan_id'] is not None and _params['config']['subinterface_id'] is not None:
         _errormsg = "parameter vlan_id is mutually exclusive with subinterface_id"
         return _errormsg
-    
+
     # Some parameters have dependencies
     if not _params['subinterface']:
         if _params['state'] == "present":
@@ -258,9 +265,9 @@ def scrub_params(_params):
                 _errormsg = "missing parameter(s) required by 'subinterface': bridge_id|vlan_id or bridge_id|subinterface_id"
                 return _errormsg
 
+
 def generate_url(_params):
     # Gather Parameters
-    _state = _params['state']
     _host = _params['host']
     _port = _params['port']
 
@@ -275,7 +282,7 @@ def generate_url(_params):
             _http_method = "get"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         elif not _params['subinterface'] and _params['config']['bridge_id']:
@@ -283,16 +290,16 @@ def generate_url(_params):
             _http_method = "get"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
-        
+
         # Generate URLs for subinterface requests
         if _params['subinterface'] and _params['config']['bridge_id']:
             _url = f"http://{_host}:{_port}/trafficjam/api/interfaces/bridges/{_params['config']['bridge_id']}/subinterfaces"
             _http_method = "get"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         if _params['subinterface'] and _params['config']['bridge_id'] and _params['config']['subinterface_id']:
@@ -300,7 +307,7 @@ def generate_url(_params):
             _http_method = "get"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
     # Generate URL for Present Requests
@@ -319,7 +326,7 @@ def generate_url(_params):
                 }
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         # Generate URL for updating an existing Bridge Interface via PUT Method
@@ -335,7 +342,7 @@ def generate_url(_params):
             }
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         # Generate URLs for subinterface requests
@@ -351,12 +358,12 @@ def generate_url(_params):
             }
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         if _params['subinterface'] and _params['config']['bridge_id'] is not None and _params['config']['subinterface_id'] is not None:
             _url = f"http://{_host}:{_port}/trafficjam/api/interfaces/bridges/{_params['config']['bridge_id']}/subinterfaces/{_params['config']['subinterface_id']}"
-            _http_method="put"
+            _http_method = "put"
             _payload = {
                 "description": _params['config']['description'],
                 "vrf_id": _params['config']['vrf_id'],
@@ -365,7 +372,7 @@ def generate_url(_params):
             }
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
     # Generate URL for Absent Requests
@@ -375,7 +382,7 @@ def generate_url(_params):
             _http_method = "delete"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         if _params['subinterface'] and _params['config']['bridge_id'] is not None and _params['config']['subinterface_id'] is not None:
@@ -383,11 +390,12 @@ def generate_url(_params):
             _http_method = "delete"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
-            return _response_dict        
-    
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
+            return _response_dict
+
+
 def run_module():
-    #define available arguments/parameters a user can pass to the module
+    # define available arguments/parameters a user can pass to the module
     module_args = trafficjam_base_argspec()
 
     config_spec = dict(
@@ -441,7 +449,7 @@ def run_module():
 
     # Run through some error checking and scrub the received parameters
     errormsg = scrub_params(module.params)
-    
+
     if errormsg is not None:
         result['changed'] = True
         result['failed'] = False
@@ -458,11 +466,11 @@ def run_module():
     if http_method == "post":
         # Generate URL for Non-Subinterface Requests
         if not subinterface:
-            query_url=f"http://{host}:{port}/trafficjam/api/interfaces/bridges"
+            query_url = f"http://{host}:{port}/trafficjam/api/interfaces/bridges"
             query_method = "get"
         # Generate URL for Subinterface Requests
         elif subinterface and bridge_id is not None:
-            query_url=f"http://{host}:{port}/trafficjam/api/interfaces/bridges/{bridge_id}/subinterfaces"
+            query_url = f"http://{host}:{port}/trafficjam/api/interfaces/bridges/{bridge_id}/subinterfaces"
             query_method = "get"
 
         # Make the request
@@ -485,7 +493,7 @@ def run_module():
 
     # Exit the module passing results back to Ansible
     succeeded = process_response(response)
-    
+
     # Manage States Returned to Ansible - If Query, Nothing will ever be changed.
     if succeeded and module.params['state'] == "query":
         result['changed'] = False
@@ -498,11 +506,13 @@ def run_module():
         result['failed'] = True
     result['status_code'] = response['status_code']
     result['response'] = response['response']
-    
+
     module.exit_json(**result)
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

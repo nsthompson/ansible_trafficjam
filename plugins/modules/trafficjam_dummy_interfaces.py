@@ -136,18 +136,25 @@ status_code:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wwt.trafficjam.plugins.module_utils.trafficjam import trafficjam_base_argspec, make_request, parse_query_return, process_response
+from ansible_collections.wwt.trafficjam.plugins.module_utils.trafficjam import (
+    trafficjam_base_argspec,
+    make_request,
+    parse_query_return,
+    process_response
+)
+
 
 def scrub_params(_params):
     #
-    # The builtin methods for scrubbing parameters do not handle nested dictionaries, so we have to do it here
+    # The builtin methods for scrubbing parameters do not handle nested dictionaries,
+    # so we have to do it here
     #
 
     # Some parameters are mutually exclusive
     if _params['config'] is not None and _params['config']['name'] is not None and _params['config']['dummy_id'] is not None:
         _errormsg = "parameter name is mutually exclusive with dummy_id"
         return _errormsg
-       
+
     # Some parameters have dependencies
     if _params['state'] == "present":
         if (_params['config'] is not None and _params['config']['name']):
@@ -165,9 +172,9 @@ def scrub_params(_params):
             _errormsg = "missing parameter(s) required: dummy_id"
             return _errormsg
 
+
 def generate_url(_params):
     # Gather Parameters
-    _state = _params['state']
     _host = _params['host']
     _port = _params['port']
 
@@ -182,7 +189,7 @@ def generate_url(_params):
             _http_method = "get"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         if _params['config']['dummy_id'] is not None:
@@ -190,7 +197,7 @@ def generate_url(_params):
             _http_method = "get"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
     # Generate URL for Present Requests
@@ -208,7 +215,7 @@ def generate_url(_params):
                 }
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
         # Generate URL for updating an existing Dummy Interface via PUT Method
@@ -223,7 +230,7 @@ def generate_url(_params):
             }
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
             return _response_dict
 
     # Generate URL for Absent Requests
@@ -233,11 +240,12 @@ def generate_url(_params):
             _http_method = "delete"
 
             # Construct a dictionary to return results with
-            _response_dict = { "url": _url, "http_method": _http_method, "data": _payload }
-            return _response_dict   
-    
+            _response_dict = {"url": _url, "http_method": _http_method, "data": _payload}
+            return _response_dict
+
+
 def run_module():
-    #define available arguments/parameters a user can pass to the module
+    # define available arguments/parameters a user can pass to the module
     module_args = trafficjam_base_argspec()
 
     config_spec = dict(
@@ -282,7 +290,7 @@ def run_module():
 
     # Run through some error checking and scrub the received parameters
     errormsg = scrub_params(module.params)
-      
+
     if errormsg is not None:
         result['changed'] = True
         result['failed'] = False
@@ -297,7 +305,7 @@ def run_module():
 
     # We need to validate if the interface exists already before adding it
     if http_method == "post":
-        query_url=f"http://{host}:{port}/trafficjam/api/interfaces/dummies"
+        query_url = f"http://{host}:{port}/trafficjam/api/interfaces/dummies"
         query_method = "get"
 
         # Make the request
@@ -314,7 +322,7 @@ def run_module():
 
     # Exit the module passing results back to Ansible
     succeeded = process_response(response)
-    
+
     # Manage States Returned to Ansible - If Query, Nothing will ever be changed.
     if succeeded and module.params['state'] == "query":
         result['changed'] = False
@@ -327,11 +335,13 @@ def run_module():
         result['failed'] = True
     result['status_code'] = response['status_code']
     result['response'] = response['response']
-    
+
     module.exit_json(**result)
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
